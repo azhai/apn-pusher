@@ -30,6 +30,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <termios.h>
+#include <time.h>
 
 #include "apn.h"
 #include "apn_array.h"
@@ -37,21 +38,39 @@
 #include "apn_strings.h"
 #include "apn_strerror.h"
 
+#define CLOCK_BUFLEN 255
+#define TIME_FORMAT "%Y-%m-%d %H:%M:%S"
+time_t time_clock;
+char time_now[CLOCK_BUFLEN];
+char *logfile = NULL;
+
+
 static void __apn_logging(apn_log_levels level, const char *const message, uint32_t len) {
     (void )len;
     const char *prefix = NULL;
+    FILE *fp;
     switch (level) {
-        case APN_LOG_LEVEL_INFO:
-            prefix = "inf";
-            break;
         case APN_LOG_LEVEL_ERROR:
-            prefix = "err";
+            prefix = "ERROR";
+            break;
+        case APN_LOG_LEVEL_INFO:
+            prefix = "INFO";
             break;
         case APN_LOG_LEVEL_DEBUG:
-            prefix = "dbg";
+            prefix = "DEBUG";
             break;
     }
-    fprintf(stdout, "======> [apn][%s]: %s\n", prefix, message);
+    time_clock = time(NULL);
+    strftime(time_now, CLOCK_BUFLEN, TIME_FORMAT, localtime(&time_clock));
+    if (NULL != logfile) {
+        fp = fopen(logfile, "a+");
+    }
+    if (NULL != fp) {
+        fprintf(fp, "%s %s apns ---> %s\n", time_now, prefix, message);
+        fclose(fp);
+    } else {
+        fprintf(stdout, "%s %s apns ---> %s\n", time_now, prefix, message);
+    }
 }
 
 static void __apn_token_free(void *data) {
@@ -144,6 +163,7 @@ static void __apn_pusher_usage(void) {
     fprintf(stderr, "Usage: apn-pusher [OPTION]\n");
     fprintf(stderr, "    -h Print this message and exit\n");
     fprintf(stderr, "    -c Path to .p12 file (required)\n");
+    fprintf(stderr, "    -P Passphrase string for .p12 file\n");
     fprintf(stderr, "    -p Passphrase for .p12 file. Will be asked from the tty\n");
     fprintf(stderr, "    -d Use sandbox mode\n");
     fprintf(stderr, "    -m Body of the alert to send in notification\n");
@@ -154,6 +174,7 @@ static void __apn_pusher_usage(void) {
     fprintf(stderr, "    -y Category name of notification\n");
     fprintf(stderr, "    -t Tokens, separated with ':' (required)\n");
     fprintf(stderr, "    -T Path to file with tokens\n");
+    fprintf(stderr, "    -o Path to logging file\n");
     fprintf(stderr, "    -v Make the operation more talkative\n");
 }
 
@@ -185,12 +206,12 @@ int main(int argc, char **argv) {
     apn_set_behavior(apn_ctx, APN_OPTION_RECONNECT);
 
     apn_array_t *tokens = NULL;
-    char *p12_pass = NULL;
     char *p12 = NULL;
+    char *p12_pass = NULL;
     uint8_t ret = 0;
     uint8_t rpassword = 0;
 
-    const char *const opts = "ahc:pdm:b:s:i:e:y:t:T:v";
+    const char *const opts = "ahc:P:pdm:b:s:i:e:y:t:T:o:v";
     int c = -1;
     while ((c = getopt(argc, argv, opts)) != -1) {
         switch (c) {
@@ -208,6 +229,9 @@ int main(int argc, char **argv) {
                 break;
             case 'c':
                 p12 = apn_strndup(optarg, strlen(optarg));
+                break;
+            case 'P':
+                p12_pass = apn_strndup(optarg, strlen(optarg));
                 break;
             case 'p':
                 rpassword = 1;
@@ -235,6 +259,9 @@ int main(int argc, char **argv) {
                 break;
             case 'a':
                 apn_payload_set_content_available(payload, 1);
+                break;
+            case 'o':
+                logfile = apn_strndup(optarg, strlen(optarg));
                 break;
             case 'v':
                 apn_set_log_callback(apn_ctx, __apn_logging);

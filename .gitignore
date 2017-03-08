@@ -5,6 +5,7 @@
 /libcapn.pc
 /config.h
 /CMakeFiles/
+/build/
 *.o
 *.lib
 *.a
@@ -18,6 +19,7 @@
 /docs/def
 /docs/html
 /docs/man
+/src/third_party/jansson
 src/library/apn_platform.h
 src/library/apn_version.h
 apn-pusher

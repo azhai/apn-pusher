@@ -359,12 +359,17 @@ apn-pusher -c ./test_push.p12 -p -d -m 'Test' -t 1D2EE2B3A38689E0D43E6608FEDEFCA
 apn-pusher -c ./test_push.p12 -p -d -m 'Test' -T ./tokens.txt -v
 ```
 
+```sh
+python pusher.py tokens.txt '我们的APP有了新功能，请大家升级吧！'
+```
+
 Options:
 
 ```sh
 Usage: apn-pusher [OPTION]
     -h Print this message and exit
     -c Path to .p12 file (required)
+    -P Passphrase string for .p12 file
     -p Passphrase for .p12 file. Will be asked from the tty
     -d Use sandbox mode
     -m Body of the alert to send in notification
@@ -375,5 +380,6 @@ Usage: apn-pusher [OPTION]
     -y Category name of notification
     -t Tokens, separated with ':' (required)
     -T Path to file with tokens
+    -o Path to logging file
     -v Make the operation more talkative
 ```
