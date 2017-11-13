@@ -7,6 +7,37 @@ With the library you can easily send push notifications to iOS and OS X (>= 10.8
 
 __Version 2.0 isn't compatible with 1.0__
 
+
+## Compile libcapn and apn-pusher
+
+```bash
+git clone https://github.com/azhai/apn-pusher.git
+git submodule update --init
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc" \
+    -DCMAKE_INSTALL_PREFIX=/opt/apn-pusher-2.0.2 ../
+make
+sudo make install
+
+cd /opt/apn-pusher-2.0.2/
+patchelf --set-rpath '$ORIGIN:$ORIGIN/../lib/capn' bin/*
+chmod +x bin/apn-pusher
+sudo ln -s /opt/apn-pusher-2.0.2/bin/apn-pusher /usr/bin/
+```
+
+## Usage of pypush
+
+```
+cd ~/projects/
+cp -r apn-pusher/src/pypusher ./
+cd pypusher
+pip install -r requirements.txt
+#change settings.py and certs/prod.p12
+python pusher.py
+```
+
+
 ## Table of Contents
 
 <!-- toc -->
